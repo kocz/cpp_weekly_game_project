@@ -82,7 +82,7 @@ struct GameState
     constexpr static std::string_view name{ "JoystickAxis" };
     constexpr static auto             elements = std::to_array<std::string_view>({ "id", "axis", "position" });
     unsigned int                      id;
-    unsigned int                      axis;
+    sf::Joystick::Axis                axis;
     float                             position;
   };
 
@@ -397,11 +397,16 @@ template<typename EventType, typename... Param> void serialize(nlohmann::json &j
 {
   auto make_inner = [&]() {
     nlohmann::json innerObj;
-    std::size_t    index = 0;
+    constexpr std::size_t n = sizeof...(param);
+    if constexpr (n == 0) {
+      return innerObj;
+    } else {
+      std::size_t index = 0;
 
-    (innerObj.emplace(EventType::elements[index++], param), ...);
+      (innerObj.emplace(EventType::elements[index++], param), ...);
 
-    return innerObj;
+      return innerObj;
+    }
   };
 
   nlohmann::json outerObj;
