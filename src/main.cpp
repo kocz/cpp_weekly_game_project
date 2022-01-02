@@ -1,6 +1,7 @@
 #include <array>
 #include <fstream>
 #include <iostream>
+#include <set>
 
 #include <SFML/Graphics/CircleShape.hpp>
 #include <SFML/Graphics/RenderWindow.hpp>
@@ -99,7 +100,9 @@ int main(int argc, const char **argv)
   Game::GameState gs;
   gs.setEvents(initialEvents);
 
-  bool            joystickEvent = false;
+  bool joystickEvent = false;
+  std::set<sf::Keyboard::Key> pressedKeys;
+
 
   std::uint64_t eventsProcessed{ 0 };
 
@@ -130,6 +133,12 @@ int main(int argc, const char **argv)
                                   gs.update(jsEvent);
                                   joystickEvent = true;
                                 },
+                                 [&](const Game::GameState::Pressed<Game::GameState::Key> &jsEvent) {
+                                   pressedKeys.insert(jsEvent.source.key);
+                                 },
+                                 [&](const Game::GameState::Released<Game::GameState::Key> &jsEvent) {
+                                   pressedKeys.erase(jsEvent.source.key);
+                                 },
                                  [&](const Game::GameState::CloseWindow & /*unused*/) { window.close(); },
                                  [&](const Game::GameState::TimeElapsed &te) {
                                    ImGui::SFML::Update(window, te.toSFMLTime());
@@ -174,6 +183,9 @@ int main(int argc, const char **argv)
           "{}: {}", Game::toString(static_cast<sf::Joystick::Axis>(axis)), gs.joySticks[0].axisPosition[axis]);
       }
     }
+
+    ImGuiHelper::Text("Keys Pressed:");
+    std::for_each(pressedKeys.cbegin(), pressedKeys.cend(), [](const sf::Keyboard::Key& key){ ImGuiHelper::Text("{}", key); });
 
     ImGui::End();
 
